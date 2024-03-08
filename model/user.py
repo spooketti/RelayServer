@@ -6,19 +6,15 @@ class Users(db.Model):
     userID = db.Column(db.Text, unique=True)
     id = db.Column(db.Integer,primary_key=True)
     password = db.Column(db.Text)
-    name = db.Column(db.Text)
     username = db.Column(db.Text)
     pfp = db.Column(db.Text)
     
-    def update(self, oldPW, newPW,name,username,pfp):
+    def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):
             return "Password does not match"
         
         if not newPW.isspace() and newPW != "":
             self.password = generate_password_hash(newPW,method='sha256')
-        
-        if not name.isspace() and name != "":
-            self.name = name
         
         if not username.isspace() and username != "":
             self.username = username
