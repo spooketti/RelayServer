@@ -41,6 +41,15 @@ def signup():
                                 domain="172.27.233.236"
                                 )
     return resp
+
+@app.route('/auth/', methods=['GET'])
+@token_required
+def auth(current_user):
+    
+    return jsonify({'pfp': current_user.pfp,
+                    "username":current_user.username,
+                    "userID":current_user.userID,
+                    })
     
 @app.route('/login/', methods=['POST'])  
 def login_user(): 
