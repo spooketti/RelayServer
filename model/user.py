@@ -8,6 +8,8 @@ class Users(db.Model):
     password = db.Column(db.Text)
     username = db.Column(db.Text)
     pfp = db.Column(db.Text)
+    bio = db.Column(db.Text)
+    joindate = db.Column(db.Text)
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):

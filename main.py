@@ -27,7 +27,7 @@ def before_request():
 def signup():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='sha256')
-    user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"]) 
+    user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"],joindate=data["joindate"]) 
     db.session.add(user)  
     db.session.commit()    
     token = jwt.encode({'userID' : user.userID, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'], algorithm="HS256")
@@ -49,6 +49,7 @@ def auth(current_user):
     return jsonify({'pfp': current_user.pfp,
                     "username":current_user.username,
                     "userID":current_user.userID,
+                    "joindate":current_user.joindate
                     })
     
 @app.route('/login/', methods=['POST'])  
