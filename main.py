@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, make_response, Response
 from threading import Thread
-from init import app
+from init import app, socketio
 from flask_sqlalchemy import SQLAlchemy 
 from authToken import token_required
 import jwt
@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from init import db, cors
 import time
 from model.user import Users, initUserTable
+from model.chat import DM, initDMTable
 import datetime
 import os
 
@@ -20,7 +21,7 @@ def home():
 def before_request():
     # Check if the request came from a specific origin
     allowed_origin = request.headers.get('Origin')
-    if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:3000', 'https://spooketti.github.io']:
+    if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:8080', 'https://spooketti.github.io']:
         cors._origins = allowed_origin
         
 @app.route("/signup/", methods=["POST"])
@@ -52,6 +53,16 @@ def auth(current_user):
                     "joindate":current_user.joindate
                     })
     
+@app.route('/sendDM/', methods=["POST"])
+@token_required
+def sendDM(current_user):
+    data = request.get_json()
+    dm = DM(message=data["message"],sender=current_user.id,recipient=data["recipient"])
+    db.session.add(dm)
+    db.session.commit()
+    socketio.emit("response",{"response":"response"})
+    return "Success"
+    
 @app.route('/login/', methods=['POST'])  
 def login_user(): 
     data = request.get_json()
@@ -77,7 +88,9 @@ def login_user():
     
 
 def run():
-  app.run(host='0.0.0.0',port=6221)
+  #app.run(host='0.0.0.0',port=6221)
+  socketio.run(app, host="0.0.0.0",port=6221)
 
 initUserTable()
+initDMTable()
 run()
