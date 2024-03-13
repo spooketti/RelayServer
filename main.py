@@ -2,13 +2,14 @@ from flask import Flask, request, jsonify, make_response, Response
 from threading import Thread
 from init import app, socketio
 from flask_sqlalchemy import SQLAlchemy 
+from sqlalchemy import or_
 from authToken import token_required
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from init import db, cors
 import time
 from model.user import Users, initUserTable
-from model.chat import DM, initDMTable
+from model.dm import DM, initDMTable
 import datetime
 import os
 
@@ -57,11 +58,34 @@ def auth(current_user):
 @token_required
 def sendDM(current_user):
     data = request.get_json()
-    dm = DM(message=data["message"],sender=current_user.id,recipient=data["recipient"])
+    dm = DM(message=data["message"],user1=current_user.id,user2=data["recipient"])
     db.session.add(dm)
     db.session.commit()
     socketio.emit("response",{"response":"response"})
     return "Success"
+
+@app.route("/getDM/",methods=["POST"])
+@token_required
+def getDM(current_user):
+    data = request.get_json()
+    otherUser = Users.query.filter_by(userID=data["otherUser"]).first()  
+    dm1 = DM.query.filter((DM.user1 == current_user.id, DM.user2 == otherUser.id)|(DM.user1==otherUser.id,DM.user2==current_user.id)).all()
+    #dm2 = DM.query.filter(DM.user1==otherUser.id,DM.user2==current_user.id)
+    dms = []
+    for dm in dm1:
+        dms.append({'message':dm.message})
+    #for dm in dm2.items: #worlds worst code
+      #  dms.append({'message':dm.message})
+    return jsonify({'dms': dms})
+    
+    
+    
+    
+
+@socketio.on("connect")
+def test_connect(auth):
+    print(auth)
+
     
 @app.route('/login/', methods=['POST'])  
 def login_user(): 
