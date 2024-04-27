@@ -69,6 +69,18 @@ def createServer(current_user):
     db.session.commit()
     return "Server Created"
 
+@app.route('/getServer/',methods=["GET"])
+@token_required
+def getServer(current_user):
+    dbServerList = ServerUser.query.filter_by(userID=current_user.id).all()
+    serverList = []
+    for server in dbServerList:
+        current_server = Servers.query.filter_by(id=server.serverID).first()
+        serverList.append({
+            'name':current_server.name,
+            'pfp':current_server.pfp,
+        })
+    return jsonify({'servers': serverList})
     
 
     
