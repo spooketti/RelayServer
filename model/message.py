@@ -2,16 +2,12 @@ from init import db, app
 from werkzeug.security import check_password_hash,generate_password_hash
 from datetime import datetime
 
-class Users(db.Model):
-    __tablename__ = "users"
-    userID = db.Column(db.Text, unique=True)
+class Message(db.Model):
+    __tablename__ = "messages"
     id = db.Column(db.Integer,primary_key=True)
-    password = db.Column(db.Text)
-    username = db.Column(db.Text)
-    pfp = db.Column(db.Text)
-    bio = db.Column(db.Text)
+    user = db.Column(db.Integer,db.ForeignKey('users.id'))
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    #servers = db.relationship('Servers',secondary=user_server_association, back_populates='users')
+    server = db.Column(db.Integer,db.ForeignKey('channels.id'))
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):
@@ -31,6 +27,6 @@ class Users(db.Model):
         return "Success"
       
     
-def initUserTable():
+def initMessageTable():
     with app.app_context():
         db.create_all()

@@ -9,7 +9,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from init import db, cors
 import time
 from model.user import Users, initUserTable
-from model.dm import DM, initDMTable
+from model.channel import Channel, initChannelTable
+from model.server import Servers, initServerTable
+from model.message import Message, initMessageTable
+from model.serverUser import ServerUser, initServerUser
 import datetime
 import os
 
@@ -29,7 +32,7 @@ def before_request():
 def signup():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='sha256')
-    user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"],joindate=data["joindate"]) 
+    user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"]) 
     db.session.add(user)  
     db.session.commit()    
     token = jwt.encode({'userID' : user.userID, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'], algorithm="HS256")
@@ -51,33 +54,23 @@ def auth(current_user):
     return jsonify({'pfp': current_user.pfp,
                     "username":current_user.username,
                     "userID":current_user.userID,
-                    "joindate":current_user.joindate
+                    "joindate":current_user.date
                     })
     
-@app.route('/sendDM/', methods=["POST"])
+@app.route('/createServer/',methods=["POST"])
 @token_required
-def sendDM(current_user):
+def createServer(current_user):
     data = request.get_json()
-    dm = DM(message=data["message"],user1=current_user.id,user2=data["recipient"])
-    db.session.add(dm)
+    server = Servers(name = data["name"],pfp = data["pfp"])
+    db.session.add(server)  
+    db.session.commit() 
+    server_user = ServerUser(userID=current_user.id,serverID=server.id,userPermission="admin")   
+    db.session.add(server_user)
     db.session.commit()
-    socketio.emit("response",{"response":"response"})
-    return "Success"
+    return "Server Created"
 
-@app.route("/getDM/",methods=["POST"])
-@token_required
-def getDM(current_user):
-    data = request.get_json()
-    otherUser = Users.query.filter_by(userID=data["otherUser"]).first()  
-    dm1 = DM.query.filter((DM.user1 == current_user.id, DM.user2 == otherUser.id)|(DM.user1==otherUser.id,DM.user2==current_user.id)).all()
-    #dm2 = DM.query.filter(DM.user1==otherUser.id,DM.user2==current_user.id)
-    dms = []
-    for dm in dm1:
-        dms.append({'message':dm.message})
-    #for dm in dm2.items: #worlds worst code
-      #  dms.append({'message':dm.message})
-    return jsonify({'dms': dms})
     
+
     
     
     
@@ -116,5 +109,8 @@ def run():
   socketio.run(app, host="0.0.0.0",port=6221)
 
 initUserTable()
-initDMTable()
+initChannelTable()
+initServerTable()
+initMessageTable()
+initServerUser()
 run()
