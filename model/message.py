@@ -1,13 +1,15 @@
 from init import db, app
 from werkzeug.security import check_password_hash,generate_password_hash
-from datetime import datetime
+import time
 
 class Message(db.Model):
     __tablename__ = "messages"
     id = db.Column(db.Integer,primary_key=True)
     user = db.Column(db.Integer,db.ForeignKey('users.id'))
-    date = db.Column(db.DateTime, default=datetime.utcnow)
-    server = db.Column(db.Integer,db.ForeignKey('channels.id'))
+    date = db.Column(db.Integer,default=time.time())
+    content = db.Column(db.Text)
+    image = db.Column(db.Text)
+    channel = db.Column(db.Integer,db.ForeignKey('channels.id'))
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):

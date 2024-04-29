@@ -1,6 +1,6 @@
 from init import db, app
 from werkzeug.security import check_password_hash,generate_password_hash
-from datetime import datetime
+import time
 
 class Users(db.Model):
     __tablename__ = "users"
@@ -10,7 +10,7 @@ class Users(db.Model):
     username = db.Column(db.Text)
     pfp = db.Column(db.Text)
     bio = db.Column(db.Text)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
+    date = db.Column(db.Integer,default=time.time())
     #servers = db.relationship('Servers',secondary=user_server_association, back_populates='users')
     
     def update(self, oldPW, newPW,username,pfp):

@@ -1,13 +1,11 @@
 from init import db, app
 from werkzeug.security import check_password_hash,generate_password_hash
-from datetime import datetime
 
 class ServerUser(db.Model):
     __tablename__ = "server_user"
     userID = db.Column(db.Integer, db.ForeignKey('users.id'))
     serverID = db.Column(db.Integer,db.ForeignKey('servers.id'))
     userPermission = db.Column(db.Text)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
     id = db.Column(db.Integer,primary_key=True)
     #users = db.relationship('User', secondary=user_server_association,back_populates='servers')
     
