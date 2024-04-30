@@ -8,7 +8,6 @@ class Servers(db.Model):
     name = db.Column(db.Text)
     pfp = db.Column(db.Text)
     date = db.Column(db.Integer,default=time.time())
-    #users = db.relationship('User', secondary=user_server_association,back_populates='servers')
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):

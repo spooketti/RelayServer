@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, make_response, Response
 from threading import Thread
 from init import app, socketio
 from flask_sqlalchemy import SQLAlchemy 
+from flask_socketio import join_room
 from sqlalchemy import and_
 from authToken import token_required
 import jwt
@@ -22,11 +23,14 @@ def home():
     return "Relay's Server"
 
 @app.before_request
-def before_request():
-    # Check if the request came from a specific origin
+def before_request(): #cite
     allowed_origin = request.headers.get('Origin')
     if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:8080', 'https://spooketti.github.io']:
         cors._origins = allowed_origin
+        
+@socketio.on('join')
+def join(room):
+    join_room(room)
         
 @app.route("/signup/", methods=["POST"])
 def signup():
@@ -42,7 +46,7 @@ def signup():
                                 secure=True,
                                 httponly=True,
                                 path='/',
-                                samesite='None',  # This is the key part for cross-site requests
+                                samesite='None',  # cite
                                 domain="172.27.233.236"
                                 )
     return resp
@@ -67,7 +71,11 @@ def createServer(current_user):
     server_user = ServerUser(userID=current_user.id,serverID=server.id,userPermission="admin")   
     db.session.add(server_user)
     db.session.commit()
-    return "Server Created"
+    return jsonify({
+        "name":data["name"],
+        "pfp":data["pfp"],
+        "serverID":server.id
+    })
 
 @app.route('/getServer/',methods=["GET"])
 @token_required
@@ -106,7 +114,6 @@ def getServerChannels(current_user):
     channelList = []
     serverName = Servers.query.filter_by(id=data["serverID"]).first().name
     for channel in dbChannelList:
-        #current_channel = Channel.query.filter_by(serverID=data["serverID"]).first()
         channelList.append({
             "name":channel.name,
             "channelID":channel.id
@@ -133,7 +140,7 @@ def login_user():
                                 secure=True,
                                 httponly=True,
                                 path='/',
-                                samesite='None',  # This is the key part for cross-site requests
+                                samesite='None',  # cite
                                 domain="172.27.233.236"
                                 )
         return resp
@@ -154,7 +161,7 @@ def sendServerMessage(current_user,json, methods=['GET', 'POST']):
         'message':data["content"],
         'date':message.date
     }
-    socketio.emit("recieveServerMessage",payload)
+    socketio.emit("recieveServerMessage",payload,room=data["channel"])
 
 @app.route('/getServerMessage/',methods=["POST"])
 @token_required
@@ -172,7 +179,9 @@ def getServerMessage(current_user):
             'message':message.content,
             'date':message.date
         })
-    return jsonify({'messages': messageList})
+    channelName = Channel.query.filter_by(id=queryChannel).first().name
+    return jsonify({'messages': messageList,
+                    "channelName":channelName})
 
 @app.route('/joinServer/',methods=["POST"])
 @token_required
@@ -191,7 +200,6 @@ def joinServer(current_user):
 
 
 def run():
-  #app.run(host='0.0.0.0',port=6221)
   socketio.run(app, host="0.0.0.0",port=6221)
 
 initUserTable()

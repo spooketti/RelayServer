@@ -7,7 +7,6 @@ class ServerUser(db.Model):
     serverID = db.Column(db.Integer,db.ForeignKey('servers.id'))
     userPermission = db.Column(db.Text)
     id = db.Column(db.Integer,primary_key=True)
-    #users = db.relationship('User', secondary=user_server_association,back_populates='servers')
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):

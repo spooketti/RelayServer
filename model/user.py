@@ -11,7 +11,6 @@ class Users(db.Model):
     pfp = db.Column(db.Text)
     bio = db.Column(db.Text)
     date = db.Column(db.Integer,default=time.time())
-    #servers = db.relationship('Servers',secondary=user_server_association, back_populates='users')
     
     def update(self, oldPW, newPW,username,pfp):
         if not check_password_hash(self.password, oldPW):
