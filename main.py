@@ -23,16 +23,16 @@ def home():
     return "Relay's Server"
 
 @app.before_request
-def before_request(): #cite
+def before_request(): #provided by teacher John Mortenson
     allowed_origin = request.headers.get('Origin')
-    if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:8080', 'https://spooketti.github.io']:
+    if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:8080']:
         cors._origins = allowed_origin
         
-@socketio.on('join')
+@socketio.on('join') # a room is used to choose who to send data to
 def join(room):
     join_room(room)
         
-@app.route("/signup/", methods=["POST"])
+@app.route("/signup/", methods=["POST"]) #provided by teacher John Mortensen
 def signup():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='sha256')
@@ -51,24 +51,25 @@ def signup():
                                 )
     return resp
 
-@app.route('/auth/', methods=['GET'])
+@app.route('/auth/', methods=['GET']) #check if the user exists
 @token_required
 def auth(current_user):
     
     return jsonify({'pfp': current_user.pfp,
                     "username":current_user.username,
                     "userID":current_user.userID,
-                    "joindate":current_user.date
+                    "joindate":current_user.date,
+                    "bio":current_user.bio
                     })
     
-@app.route('/createServer/',methods=["POST"])
+@app.route('/createServer/',methods=["POST"]) #creates server 
 @token_required
 def createServer(current_user):
     data = request.get_json()
     server = Servers(name = data["name"],pfp = data["pfp"])
     db.session.add(server)  
     db.session.commit() 
-    server_user = ServerUser(userID=current_user.id,serverID=server.id,userPermission="admin")   
+    server_user = ServerUser(userID=current_user.id,serverID=server.id,userPermission="admin")   #server user is who exists in a server 
     db.session.add(server_user)
     db.session.commit()
     return jsonify({
@@ -91,14 +92,18 @@ def getServer(current_user):
         })
     return jsonify({'servers': serverList})
 
-@app.route('/createChannel/',methods=["POST"])
+
+@socketio.on("createChannel")
 @token_required
-def createChannel(current_user):
-    data = request.get_json()
-    channel = Channel(name = data["name"],serverID=data["serverID"])
+def createChannel(current_user,json, methods=['POST']):
+    channel = Channel(name = json["name"],serverID=json["serverID"])
     db.session.add(channel)  
     db.session.commit() 
-    return "Channel Created"
+    payload = {
+        "channelID":channel.id,
+        "name":json["name"]
+    }
+    socketio.emit("recieveChannelCreate",payload,room=f'Server:{json["serverID"]}')
 
 @app.route('/getServerChannels/',methods=["POST"])
 @token_required
@@ -120,10 +125,7 @@ def getServerChannels(current_user):
         })
     return jsonify({'channels': channelList,
                     'serverName':serverName})
-    
-@socketio.on("connect")
-def test_connect(auth):
-    print(auth)
+
 
     
 @app.route('/login/', methods=['POST'])  
@@ -148,7 +150,7 @@ def login_user():
 
     return make_response('Invalid Credentials',  401, {'Authentication': '"login required"'})
 
-@socketio.on("sendServerMessage")
+@socketio.on("sendServerMessage") #socketio to make the app realtime
 @token_required
 def sendServerMessage(current_user,json, methods=['GET', 'POST']):
     data = json
@@ -162,8 +164,10 @@ def sendServerMessage(current_user,json, methods=['GET', 'POST']):
         'date':message.date
     }
     socketio.emit("recieveServerMessage",payload,room=data["channel"])
+    
 
-@app.route('/getServerMessage/',methods=["POST"])
+
+@app.route('/getServerMessage/',methods=["POST"]) #query the server messages
 @token_required
 def getServerMessage(current_user):
     data = request.get_json()
