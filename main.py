@@ -15,7 +15,7 @@ from model.server import Servers, initServerTable
 from model.message import Message, initMessageTable
 from model.serverUser import ServerUser, initServerUser
 import datetime
-import os
+import json
 
 
 @app.route('/')
@@ -37,10 +37,15 @@ def signup():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='sha256')
     user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"]) 
-    db.session.add(user)  
-    db.session.commit()    
+    try:
+        db.session.add(user)  
+        db.session.commit()
+    except:
+        return jsonify({"error":"UserID taken!"})
     token = jwt.encode({'userID' : user.userID, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'], algorithm="HS256")
-    resp = Response('{"jwt":"'+token+'"}')
+    response = {"jwt":token}
+    json_data = json.dumps(response)
+    resp = Response(json_data, content_type="application/json")
     resp.set_cookie("jwt", token,
                                 max_age=3600,
                                 secure=True,
@@ -133,10 +138,17 @@ def login_user():
     data = request.get_json()
     loginID = data["userID"]
     loginPW = data["password"]
-    user = Users.query.filter_by(userID=loginID).first()   
+    user = Users.query.filter_by(userID=loginID).first()
+    if not user:
+        response = {"error":"User does not exist!"}
+        return jsonify(response)
+    
     if check_password_hash(user.password, loginPW):
         token = jwt.encode({'userID' : user.userID, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'], algorithm="HS256")
-        resp = Response('{"jwt":"'+token+'"}')
+        response = {"jwt":token}
+        json_data = json.dumps(response)
+        resp = Response(json_data, content_type="application/json")
+        
         resp.set_cookie("jwt", token,
                                 max_age=3600,
                                 secure=True,
