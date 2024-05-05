@@ -170,10 +170,11 @@ def sendServerMessage(current_user,json, methods=['GET', 'POST']):
     db.session.add(message)  
     db.session.commit() 
     payload = {
+        'userID':current_user.userID,
         "name":current_user.username,
         'pfp':current_user.pfp,
         'message':data["content"],
-        'date':message.date
+        'date':message.date,
     }
     socketio.emit("recieveServerMessage",payload,room=data["channel"])
     
@@ -193,7 +194,8 @@ def getServerMessage(current_user):
             'name':messageUser.username,
             'pfp':messageUser.pfp,
             'message':message.content,
-            'date':message.date
+            'date':message.date,
+            'userID':messageUser.userID
         })
     channelName = Channel.query.filter_by(id=queryChannel).first().name
     return jsonify({'messages': messageList,

@@ -6,7 +6,7 @@ class Servers(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.Text)
     pfp = db.Column(db.Text)
-    date = db.Column(db.Integer,default=time.time())
+    date = db.Column(db.Text,default=time.time())
       
     
 def initServerTable():
