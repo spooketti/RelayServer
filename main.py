@@ -218,7 +218,7 @@ def joinServer(current_user):
 
 
 def run():
-  socketio.run(app, host="0.0.0.0",port=6221)
+  socketio.run(app, host="0.0.0.0",port=6221,allow_unsafe_werkzeug=True)#bad idea to leave unsafe
 
 initUserTable()
 initChannelTable()
