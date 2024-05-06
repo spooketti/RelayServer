@@ -35,7 +35,7 @@ def join(room):
 @app.route("/signup/", methods=["POST"]) #provided by teacher John Mortensen
 def signup():
     data = request.get_json()
-    hashed_password = generate_password_hash(data['password'], method='sha256')
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
     user = Users(userID = data["userID"], password=hashed_password, username=data["username"],pfp=data["pfp"]) 
     try:
         db.session.add(user)  
