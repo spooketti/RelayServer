@@ -215,7 +215,12 @@ def joinServer(current_user):
     db.session.commit()
     return "Server Joined"
     
-
+@app.route("/updateUser/",methods=["POST"])
+@token_required
+def updateUser(current_user):
+    data = request.get_json()
+    user = Users.query.filter_by(userID=current_user.userID).first()
+    return user.update(data["oldPW"],data["newPW"],data["bio"],data["username"],data["pfp"])
 
 def run():
   socketio.run(app, host="0.0.0.0",port=6221,allow_unsafe_werkzeug=True)#bad idea to leave unsafe
