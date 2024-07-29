@@ -23,7 +23,7 @@ def home():
     return "Relay's Server"
 
 @app.before_request
-def before_request(): #provided by teacher John Mortenson
+def before_request(): 
     allowed_origin = request.headers.get('Origin')
     if allowed_origin in ['http://localhost:4100', 'http://172.27.233.236:8080','https://spooketti.github.io']:
         cors._origins = allowed_origin
@@ -32,7 +32,7 @@ def before_request(): #provided by teacher John Mortenson
 def join(room):
     join_room(room)
         
-@app.route("/signup/", methods=["POST"]) #provided by teacher John Mortensen
+@app.route("/signup/", methods=["POST"]) 
 def signup():
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
