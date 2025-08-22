@@ -223,7 +223,7 @@ def updateUser(current_user):
     return user.update(data["oldPW"],data["newPW"],data["username"],data["pfp"],data["bio"])
 
 def run():
-  socketio.run(app, host="0.0.0.0",port=6221,allow_unsafe_werkzeug=False)#bad idea to leave unsafe
+  socketio.run(app, host="0.0.0.0",port=6221,allow_unsafe_werkzeug=True)#bad idea to leave unsafe
 
 initUserTable()
 initChannelTable()
